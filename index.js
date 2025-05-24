@@ -162,10 +162,20 @@ function handleSubtitleSelect() {
     const file = e.target.files[0];
     if (!file) return;
 
+    // Check file extension
+    const fileName = file.name.toLowerCase();
+    const isSRT = fileName.endsWith('.srt');
+    
     const reader = new FileReader();
     reader.onload = (event) => {
-      const subtitleText = event.target.result;
-      const blob = new Blob([subtitleText], { type: "text/vtt" });
+      let subtitleText = event.target.result;
+      
+      // Convert SRT to VTT if needed
+      if (isSRT) {
+        subtitleText = convertSRTtoVTT(subtitleText);
+      }
+      
+      const blob = new Blob([subtitleText], { type: 'text/vtt' });
       const subtitleURL = URL.createObjectURL(blob);
 
       // Remove existing track if any
@@ -176,22 +186,63 @@ function handleSubtitleSelect() {
 
       // Add new track
       const track = document.createElement("track");
-      track.kind = "captions";
+      track.kind = "subtitles";
       track.label = "English";
       track.srclang = "en";
+      track.default = true;
       track.src = subtitleURL;
       video.appendChild(track);
 
       // Enable captions
       track.onload = () => {
-        video.textTracks[0].mode = "showing";
+        // Enable all text tracks
+        for (let i = 0; i < video.textTracks.length; i++) {
+          video.textTracks[i].mode = 'showing';
+        }
       };
+      
+      // Force video to reload with new track
+      if (video.src) {
+        const currentTime = video.currentTime;
+        video.load();
+        video.currentTime = currentTime;
+        if (!video.paused) video.play();
+      }
     };
 
     reader.readAsText(file);
   };
 
   input.click();
+}
+
+// Convert SRT format to VTT format
+function convertSRTtoVTT(srtText) {
+  // Remove any \r characters and split into lines
+  let lines = srtText.replace(/\r/g, '').split('\n');
+  let vttText = 'WEBVTT\n\n';
+  
+  // Process each line
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i].trim();
+    
+    // Skip empty lines and cue numbers
+    if (!line || /^\d+$/.test(line)) continue;
+    
+    // Check if line is a timestamp
+    if (line.includes('-->')) {
+      // Convert SRT timestamp to VTT timestamp
+      line = line
+        .replace(/,/g, '.')  // Replace comma with dot in timestamp
+        .replace(/\s+/g, ' ') // Normalize spaces
+        .replace(/(\d{2}:\d{2}:\d{2}\.\d{3}) (-->)/, '$1 $2 ') // Add space after first timestamp
+        .replace(/(--> \d{2}:\d{2}:\d{2}\.\d{3})/, '$1 '); // Add space after arrow
+    }
+    
+    vttText += line + '\n';
+  }
+  
+  return vttText;
 }
 
 function endDrag() {
