@@ -234,6 +234,7 @@ function init() {
 
   // Set initial duration
   durationEl.textContent = formatTime(0);
+  let lastUpdate = 0; // Track last update time for throttling
 
   // Hide native controls
   video.controls = false;
