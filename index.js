@@ -38,32 +38,35 @@ function setProgress(e, isDragging = false) {
   if (!video.duration) return;
   
   const rect = progressContainer.getBoundingClientRect();
-  let clickX;
+  let posX;
   
+  // Get the correct X position based on event type
   if (e.type.includes('touch')) {
-    clickX = e.touches[0].clientX - rect.left;
+    posX = e.touches ? e.touches[0].clientX : e.changedTouches[0].clientX;
   } else {
-    clickX = e.clientX - rect.left;
+    posX = e.clientX;
   }
+  
+  // Calculate the position relative to the progress container
+  let clickX = posX - rect.left;
   
   // Ensure clickX is within bounds
   clickX = Math.max(0, Math.min(clickX, rect.width));
   const progress = (clickX / rect.width) * 100;
+  const newTime = (clickX / rect.width) * video.duration;
 
   if (isDragging) {
     progressContainer.classList.add('dragging');
     progressBubble.classList.add('dragging');
-}
+  }
   
   // Update the UI immediately
   progressBar.style.width = `${progress}%`;
   progressBubble.style.transform = `translateY(-50%) translateX(${progress}%)`;
   
-  // Only update the video time if we're dragging or it's a click
-  if (isDragging || e.type === 'mousedown' || e.type === 'touchstart') {
-    video.currentTime = (clickX / rect.width) * video.duration;
-    currentTimeEl.textContent = formatTime(video.currentTime);
-  }
+  // Update the video time
+  video.currentTime = newTime;
+  currentTimeEl.textContent = formatTime(newTime);
 }
 
 // Toggle play/pause
@@ -290,27 +293,60 @@ function init() {
   // Hide native controls
   video.controls = false;
 
-  // Event listeners
-  document.addEventListener('mousemove', (e) => {
+  // Event listeners for progress bar dragging
+  const handleMouseMove = (e) => {
     if (isDragging) {
       setProgress(e, true);
       e.preventDefault();
     }
-  });
-  document.addEventListener('mouseup', () => {
-    endDrag();
-  });
-  document.addEventListener('touchmove', (e) => {
+  };
+
+  const handleMouseUp = () => {
+    if (isDragging) {
+      isDragging = false;
+      progressContainer.classList.remove('dragging');
+      progressBubble.classList.remove('dragging');
+    }
+  };
+
+  const handleTouchMove = (e) => {
     if (isDragging) {
       setProgress(e, true);
       e.preventDefault();
     }
-  }, { passive: false });
+  };
+
+  // Add event listeners
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('mouseup', handleMouseUp);
+  document.addEventListener('touchmove', handleTouchMove, { passive: false });
+  document.addEventListener('touchend', handleMouseUp);
   
-  document.addEventListener('touchend', () => {
-    endDrag();
+  // Handle progress bar clicks
+  progressContainer.addEventListener('click', (e) => {
+    // If we were dragging, don't trigger the click
+    if (isDragging) {
+      isDragging = false;
+      return;
+    }
+    setProgress(e);
   });
-  video.addEventListener('timeupdate', () => {
+  
+  // Handle drag start on progress bar
+  progressContainer.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    setProgress(e, true);
+    e.preventDefault();
+  });
+  
+  // Handle touch start on progress bar
+  progressContainer.addEventListener('touchstart', (e) => {
+    isDragging = true;
+    setProgress(e, true);
+    e.preventDefault();
+  });
+
+  video.addEventListener("timeupdate", () => {
     const now = Date.now();
     if (!isDragging && now - lastUpdate > 50) { // Update at most every 50ms
         const progress = (video.currentTime / video.duration) * 100;
@@ -327,13 +363,6 @@ function init() {
 
   playButton.addEventListener("click", togglePlay);
   playPauseBtn.addEventListener("click", togglePlay);
-  progressContainer.addEventListener("click", setProgress);
-  progressContainer.addEventListener('mousedown', (e) => {
-    isDragging = true;
-    setProgress(e);
-    // Prevent default to avoid text selection during drag
-    e.preventDefault();
-  });
   muteBtn.addEventListener("click", toggleMute);
   fullscreenBtn.addEventListener("click", toggleFullscreen);
   themeToggle.addEventListener("click", toggleTheme);
@@ -356,11 +385,6 @@ function init() {
       playerContainer.classList.remove("show-controls");
     }
   });
-  progressContainer.addEventListener('touchstart', (e) => {
-    isDragging = true;
-    setProgress(e);
-  });
-
   progressBar.addEventListener('mousedown', (e) => {
     e.stopPropagation();
   });
