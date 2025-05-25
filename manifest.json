@@ -1,6 +1,20 @@
 {
   "name": "Offline Video Player",
   "short_name": "VideoPlayer",
+  "description": "A modern offline video player with custom controls and subtitle support",
   "start_url": "./index.html",
-  "display": "standalone"
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "any",
+  "scope": "./",
+  "icons": [
+    {
+      "src": "icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["video", "entertainment", "utilities"]
 }
