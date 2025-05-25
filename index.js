@@ -156,8 +156,21 @@
     input.click();
   }
 
-  // Handle subtitle file selection
-  function handleSubtitleSelect() {
+  // Handle subtitle file selection and toggling
+  function toggleSubtitles() {
+    const existingTrack = video.querySelector("track");
+    const svgIcon = addSubtitlesBtn.querySelector("svg") || createSvgElement();
+    const textNode =
+      addSubtitlesBtn.childNodes[addSubtitlesBtn.childNodes.length - 1];
+
+    // If there's an existing track, remove it
+    if (existingTrack) {
+      video.removeChild(existingTrack);
+      textNode.textContent = "Add Subtitles";
+      return;
+    }
+
+    // If no track exists, open file picker to add one
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".srt,.vtt";
@@ -182,12 +195,6 @@
         const blob = new Blob([subtitleText], { type: "text/vtt" });
         const subtitleURL = URL.createObjectURL(blob);
 
-        // Remove existing track if any
-        const existingTrack = video.querySelector("track");
-        if (existingTrack) {
-          video.removeChild(existingTrack);
-        }
-
         // Add new track
         const track = document.createElement("track");
         track.kind = "subtitles";
@@ -197,9 +204,11 @@
         track.src = subtitleURL;
         video.appendChild(track);
 
-        // Enable captions
+        // Update button text
+        textNode.textContent = "Remove Subtitles";
+
+        // Enable all text tracks
         track.onload = () => {
-          // Enable all text tracks
           for (let i = 0; i < video.textTracks.length; i++) {
             video.textTracks[i].mode = "showing";
           }
@@ -218,6 +227,43 @@
     };
 
     input.click();
+  }
+
+  // Create SVG element for the button
+  function createSvgElement() {
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("width", "18");
+    svg.setAttribute("height", "18");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "2");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+
+    const rect = document.createElementNS(svgNS, "rect");
+    rect.setAttribute("width", "18");
+    rect.setAttribute("height", "14");
+    rect.setAttribute("x", "3");
+    rect.setAttribute("y", "5");
+    rect.setAttribute("rx", "2");
+    rect.setAttribute("ry", "2");
+
+    const path1 = document.createElementNS(svgNS, "path");
+    path1.setAttribute("d", "M7 15h4M15 15h2M7 11h2M13 11h4");
+
+    svg.appendChild(rect);
+    svg.appendChild(path1);
+
+    // Clear existing content and add new elements
+    addSubtitlesBtn.innerHTML = "";
+    addSubtitlesBtn.appendChild(svg);
+    const textNode = document.createTextNode("Add Subtitles");
+    addSubtitlesBtn.appendChild(document.createTextNode(" "));
+    addSubtitlesBtn.appendChild(textNode);
+
+    return svg;
   }
 
   // Convert SRT format to VTT format
@@ -369,7 +415,12 @@
     fullscreenBtn.addEventListener("click", toggleFullscreen);
     themeToggle.addEventListener("click", toggleTheme);
     selectVideoBtn.addEventListener("click", handleVideoSelect);
-    addSubtitlesBtn.addEventListener("click", handleSubtitleSelect);
+    addSubtitlesBtn.addEventListener("click", toggleSubtitles);
+
+    // Initialize the subtitles button
+    if (!addSubtitlesBtn.querySelector("svg")) {
+      createSvgElement();
+    }
 
     // Show custom controls on hover
     playerContainer.addEventListener("mousemove", () => {
