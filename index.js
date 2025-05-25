@@ -1,4 +1,4 @@
-// DOM Elements
+(function() {// DOM Elements
 const video = document.getElementById("videoPlayer");
 const playButton = document.getElementById("playButton");
 const playPauseBtn = document.getElementById("playPauseBtn");
@@ -407,3 +407,4 @@ function init() {
 
 // Initialize the app
 init();
+})();

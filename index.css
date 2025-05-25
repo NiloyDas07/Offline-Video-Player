@@ -171,12 +171,19 @@ h3 {
 /* Video Player */
 .player-container {
   position: relative;
-  max-width: 1000px;
   margin: 2rem auto;
-  border-radius: 1rem;
+  border-radius: 0.5rem;
   overflow: hidden;
   box-shadow: var(--shadow);
   background: var(--bg);
+}
+
+/* .player-container:hover .custom-controls {
+  opacity: 1;
+} */
+
+.player-container.show-controls .custom-controls {
+  opacity: 1;
 }
 
 .video-wrapper {
@@ -186,7 +193,7 @@ h3 {
   background: #000;
 }
 
-video {
+.video-wrapper video {
   position: absolute;
   top: 0;
   left: 0;
@@ -209,10 +216,6 @@ video {
   gap: 0.5rem;
   opacity: 0;
   transition: opacity 0.3s ease;
-}
-
-.player-container:hover .custom-controls {
-  opacity: 1;
 }
 
 .progress-container {
@@ -421,11 +424,4 @@ video {
   position: relative;
 }
 
-video {
-  margin-block-start: 1rem;
-  margin-inline-start: auto;
-  margin-inline-end: auto;
-  width: 90svw;
-  height: 90svh;
-  border-radius: 0.25rem;
-}
+
